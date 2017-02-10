@@ -38,6 +38,8 @@
     <AssemblyOriginatorKeyFile>MessageFormat.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Formatting\Formatters\TimeFormatter.cs" />
+    <Compile Include="Formatting\Formatters\DateFormatter.cs" />
     <Compile Include="Pluralizers\DefaultPluralizerCollection.cs" />
     <Compile Include="Pluralizers\PluralizerConfig.cs" />
     <Compile Include="Pluralizers\OverlayingPluralizerCollection.cs" />
