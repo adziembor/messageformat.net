@@ -2,9 +2,9 @@
 
 #### - better UI strings.
 
- [![Build status](https://ci.appveyor.com/api/projects/status/9g7dplst1vyibc3e?svg=true)](https://ci.appveyor.com/project/jeffijoe/messageformat-net) [![Join the chat at https://gitter.im/jeffijoe/messageformat.net](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jeffijoe/messageformat.net?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+This is a fork of messageformat.net converted to regular .NET project with a bit changed pluralization part of the project.
 
-This is an implementation of the ICU Message Format in .NET. For official information about the format, go to:
+Original project is an implementation of the ICU Message Format in .NET. For official information about the format, go to:
 http://userguide.icu-project.org/formatparse/messages
 
 ## Quickstart
@@ -79,7 +79,7 @@ Install-Package MessageFormat
 
 If you look at `MessageFormatterCachingTests`, you will find a "with cache" and "without cache" test.
 
-My machine runs on a Core i7 3960x, and with about **100,000** iterations with random data (generated beforehand), it takes about 2 seconds (1892ms) with the cache,
+Author's machine runs on a Core i7 3960x, and with about **100,000** iterations with random data (generated beforehand), it takes about 2 seconds (1892ms) with the cache,
 and about 3 seconds (3236ms) without it. **These results are with a debug build, when it is in release mode the time taken is reduced by about 40%! :)**
 
 ## Supported formats
@@ -93,12 +93,18 @@ Basically, it should be able to do anything that [MessageFormat.js][0] can do.
 ## Adding your own pluralizer functions
 
 Same thing as with [MessageFormat.js][0], you can add your own pluralizer function.
-The `Pluralizers` property is a `IDictionary<string, Pluralizer>`, so you can remove the built-in
-ones if you want.
+The `Pluralizers` property is a `IPluralizerCollection` - you can choose to
+implement it on your own or use one of built-in ones (they are all used by default):
+* `DictionaryPluralizerCollection` - just a regular case-insensitive dictionary
+* `DefaultPluralizerCollection` - defaults, you can't modify them (they are initialized with the type)
+* `OverlayingPluralizerCollection` - accepts two parameters - defaults and overlay, basically
+allows you to use defaults with your own dictionary
+* `FindingPluralizerCollection` - converts all lookup/addition strings from "iu-Latn-CA" to "iu_Latn_CA"
+and allows you to do lookups with RFC1766 codes
 
 ````csharp
 var mf = new MessageFormatter();
-mf.Pluralizers.Add("<locale>", n => {
+mf.Pluralizers.TryAddPluralizer("<locale>", n => {
   // ´n´ is the number being pluralized.
   if(n == 0)
     return "zero";
@@ -109,11 +115,11 @@ mf.Pluralizers.Add("<locale>", n => {
 ````
 
 There's no restrictions on what strings you may return, nor what strings
-you may use in your pluralization block.
+you may use in your pluralization block (unless you follow CLDR).
 
 ````csharp
 var mf = new MessageFormatter(true, "en"); // true = use cache
-mf.Pluralizers["en"] = n =>
+mf.Pluralizers.TryAddPluralizer("en", n =>
 {
     // ´n´ is the number being pluralized.
     if (n == 0)
@@ -135,13 +141,6 @@ mf.FormatMessage("You have {number, plural, thatsalot {a shitload of notificatio
 Simple - the literals are `{`, `}` and `#` (in a plural block). 
 To escape a literal, use a `\` - e.g. `\{`.
   
-# Anything else?
-
-There's not a lot - Alex Sexton of [MessageFormat.js][0] did a great 
-job documenting his library, and like I said,
-I wrote my implementation so it would 
-be (somewhat) compatible with his.
-
 # Bugs / issues
 
 If you have issues with the library, and the exception makes no sense, please open an issue
@@ -149,16 +148,12 @@ and include your message, as well as the data you used.
 
 # Todo
 
-* Built-in locales (currently only `en` is added per default).
-
-Don't expect this in the near future - you're welcome to submit a PR. :)
+* Full pluralizations table generator with CLDR
+* Ordinals (`{day}{day, selectordinal, one{st} two{nd} few{rd} many{rd} other{th}}`) support with CLDR rules
 
 # Author
 
-I'm Jeff Hansen, a software developer who likes to fiddle with string parsing when it is not too difficult.
-I also do a lot of ASP.NET Web API back-end development, and quite a bit of web front-end stuff.
-
-You can find me on Twitter: [@jeffijoe][1].
+You can find the original author on Twitter: [@jeffijoe][1].
 
   [0]: https://github.com/SlexAxton/messageformat.js
   [1]: https://twitter.com/jeffijoe

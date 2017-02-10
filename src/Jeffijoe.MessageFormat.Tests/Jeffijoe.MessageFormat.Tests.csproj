@@ -91,6 +91,7 @@
     <Compile Include="Parsing\PatternParser\PatternParserGetKeyTests.cs" />
     <Compile Include="Parsing\PatternParser\PatternParserParseTests.cs" />
     <Compile Include="Parsing\PatternParser\PatternParserWithRealLiteralParser.cs" />
+    <Compile Include="PluralizerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestHelpers\Benchmark.cs" />
   </ItemGroup>

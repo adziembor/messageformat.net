@@ -492,7 +492,7 @@ namespace Jeffijoe.MessageFormat.Tests
 
             {
                 var mf = new MessageFormatter(true, "en");
-                mf.Pluralizers["en"] = n => {
+                mf.Pluralizers.TryAddPluralizer("en", n => {
                     // ´n´ is the number being pluralized.
                     // ReSharper disable once CompareOfFloatsByEqualityOperator
                     if (n == 0)
@@ -511,7 +511,7 @@ namespace Jeffijoe.MessageFormat.Tests
                     }
 
                     return "other";
-                };
+                });
 
                 var actual =
                     mf.FormatMessage(

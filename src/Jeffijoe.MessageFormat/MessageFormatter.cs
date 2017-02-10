@@ -143,7 +143,7 @@ namespace Jeffijoe.MessageFormat
         /// <value>
         ///     The pluralizers, or <c>null</c> if the plural formatter has not been added.
         /// </value>
-        public IDictionary<string, Pluralizer> Pluralizers
+        public IPluralizerCollection Pluralizers
         {
             get
             {
@@ -152,7 +152,7 @@ namespace Jeffijoe.MessageFormat
                 {
                     return null;
                 }
-
+                
                 return pluralFormatter.Pluralizers;
             }
         }

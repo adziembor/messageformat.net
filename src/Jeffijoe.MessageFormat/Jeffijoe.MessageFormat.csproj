@@ -12,8 +12,6 @@
     <AssemblyName>Jeffijoe.MessageFormat</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
-    <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <TargetFrameworkProfile>Profile259</TargetFrameworkProfile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -40,12 +38,16 @@
     <AssemblyOriginatorKeyFile>MessageFormat.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Pluralizers\DefaultPluralizerCollection.cs" />
+    <Compile Include="Pluralizers\PluralizerConfig.cs" />
+    <Compile Include="Pluralizers\OverlayingPluralizerCollection.cs" />
+    <Compile Include="Pluralizers\DictionaryPluralizerCollection.cs" />
     <Compile Include="FormatterNotFoundException.cs" />
     <Compile Include="Formatting\BaseFormatter.cs" />
     <Compile Include="Formatting\FormatterExtension.cs" />
     <Compile Include="Formatting\FormatterLibrary.cs" />
     <Compile Include="Formatting\Formatters\PluralFormatter.cs" />
-    <Compile Include="Formatting\Formatters\Pluralizer.cs" />
+    <Compile Include="Pluralizers\Pluralizer.cs" />
     <Compile Include="Formatting\Formatters\VariableFormatter.cs" />
     <Compile Include="Formatting\IFormatterLibrary.cs" />
     <Compile Include="Formatting\KeyedBlock.cs" />
@@ -58,6 +60,7 @@
     <Compile Include="Helpers\ObjectHelper.cs" />
     <Compile Include="Helpers\StringBuilderHelper.cs" />
     <Compile Include="IMessageFormatter.cs" />
+    <Compile Include="IPluralizerCollection.cs" />
     <Compile Include="MessageFormatter.cs" />
     <Compile Include="MessageFormatterException.cs" />
     <Compile Include="Parsing\FormatterRequestCollection.cs" />
@@ -69,19 +72,16 @@
     <Compile Include="Parsing\ILiteralParser.cs" />
     <Compile Include="Parsing\IPatternParser.cs" />
     <Compile Include="Parsing\PatternParser.cs" />
+    <Compile Include="Pluralizers\FindingPluralizerCollection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="MessageFormat.snk" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Portable.ConcurrentDictionary, Version=1.0.3.0, Culture=neutral, PublicKeyToken=8b3524163ea7a2b3, processorArchitecture=MSIL">
-      <HintPath>..\packages\Portable.ConcurrentDictionary.1.0.3\lib\portable45-net45+win8+wp8+wpa81\Portable.ConcurrentDictionary.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
+    <Reference Include="System" />
   </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

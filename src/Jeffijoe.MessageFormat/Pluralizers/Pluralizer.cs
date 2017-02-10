@@ -2,7 +2,7 @@
 // - Pluralizer.cs
 // Author: Jeff Hansen <jeff@jeffijoe.com>
 // Copyright (C) Jeff Hansen 2014. All rights reserved.
-namespace Jeffijoe.MessageFormat.Formatting.Formatters
+namespace Jeffijoe.MessageFormat.Pluralizers
 {
     /// <summary>
     ///     Given the specified number, determines what plural form is being used.

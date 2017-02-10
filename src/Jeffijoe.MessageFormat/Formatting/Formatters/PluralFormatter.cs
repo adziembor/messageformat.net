@@ -3,6 +3,7 @@
 // Author: Jeff Hansen <jeff@jeffijoe.com>
 // Copyright (C) Jeff Hansen 2014. All rights reserved.
 
+using Jeffijoe.MessageFormat.Pluralizers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -23,8 +24,7 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
         /// </summary>
         public PluralFormatter()
         {
-            this.Pluralizers = new Dictionary<string, Pluralizer>();
-            this.AddStandardPluralizers();
+            this.Pluralizers = PluralizerConfig.Default;
         }
 
         #endregion
@@ -37,7 +37,7 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
         /// <value>
         ///     The pluralizers.
         /// </value>
-        public IDictionary<string, Pluralizer> Pluralizers { get; private set; }
+        public IPluralizerCollection Pluralizers { get; set; }
 
         #endregion
 
@@ -95,8 +95,8 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
             }
 
             var n = Convert.ToDouble(value);
-            var pluralized = new StringBuilder(this.Pluralize(locale, arguments, n, offset));
-            var result = this.ReplaceNumberLiterals(pluralized, n - offset);
+            var pluralized = new StringBuilder(Pluralize(locale, arguments, n, offset));
+            var result = ReplaceNumberLiterals(pluralized, n - offset);
             var formatted = messageFormatter.FormatMessage(result, args);
             return formatted;
         }
@@ -131,9 +131,9 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
         internal string Pluralize(string locale, ParsedArguments arguments, double n, double offset)
         {
             Pluralizer pluralizer;
-            if (this.Pluralizers.TryGetValue(locale, out pluralizer) == false)
+            if (!Pluralizers.TryGetPluralizer(locale, out pluralizer))
             {
-                pluralizer = this.Pluralizers["en"];
+                pluralizer = DefaultPluralizer;
             }
 
             var pluralForm = pluralizer(n - offset);
@@ -251,28 +251,12 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
             return sb.ToString();
         }
 
-        /// <summary>
-        ///     Adds the standard pluralizers.
-        /// </summary>
-        private void AddStandardPluralizers()
+        private static Pluralizer DefaultPluralizer
         {
-            this.Pluralizers.Add(
-                "en", 
-                n => {
-                    // ReSharper disable CompareOfFloatsByEqualityOperator
-                    if (n == 0)
-                    {
-                        return "zero";
-                    }
-
-                    if (n == 1)
-                    {
-                        return "one";
-                    }
-
-                    // ReSharper restore CompareOfFloatsByEqualityOperator
-                    return "other";
-                });
+            get
+            {
+                return n => "other";
+            }
         }
 
         #endregion
