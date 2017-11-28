@@ -27,7 +27,7 @@ namespace Jeffijoe.MessageFormat.Pluralizers
             // todo: cldr parser
             // http://cldr.unicode.org/index/downloads
             // /cldr-common-*/common/supplemental/plurals.xml
-            _collection.AddRange("ast ca de et fi fy gl it ji nl sv sw ur yi".Split(' '),
+            _collection.AddRange("ast ca de et fi fy gl it ji nl sv sw ur yi af asa az bem bez bg brx ce cgg chr ckb dv ee el eo es eu fo fur gsw ha haw hu jgo jmc ka kaj kcg kk kkj kl ks ksb ku ky lb lg mas mgo ml mn nah nb nd ne nn nnh no nr ny nyn om or os pap ps rm rof rwk saq sdh seh sn so sq ss ssy st syr ta te teo tig tk tn tr ts ug uz ve vo vun wae xh xog".Split(' '),
                 i => i == 1 ? "one" : "other");
             _collection.Add("pl",
                 i =>
