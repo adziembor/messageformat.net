@@ -53,10 +53,10 @@ namespace Jeffijoe.MessageFormat.Tests.Formatting.Formatters
         }
 
         /// <summary>
-        /// The pluralize_defaults_to_en_locale_when_specified_locale_is_not_found
+        /// The pluralize_defaults_to_unknown_locale_when_specified_locale_is_not_found
         /// </summary>
         [Fact]
-        public void Pluralize_defaults_to_en_locale_when_specified_locale_is_not_found()
+        public void Pluralize_defaults_to_unknown_locale_when_specified_locale_is_not_found()
         {
             var subject = new PluralFormatter();
             var args = new Dictionary<string, object> { { "test", 1 } };
@@ -66,12 +66,12 @@ namespace Jeffijoe.MessageFormat.Tests.Formatting.Formatters
                     {
                         new KeyedBlock("zero", "nothing"),
                         new KeyedBlock("one", "just one"),
-                        new KeyedBlock("other", "wow")
+                        new KeyedBlock("other", "some number")
                     },
                     Array.Empty<FormatterExtension>());
             var request = new FormatterRequest(new Literal(1, 1, 1, 1, ""), "test", "plural", null);
             var actual = subject.Pluralize("unknown", arguments, new PluralContext(Convert.ToDecimal(Convert.ToDouble(args[request.Variable]))), 0);
-            Assert.Equal("just one", actual);
+            Assert.Equal("some number", actual);
         }
 
         /// <summary>
