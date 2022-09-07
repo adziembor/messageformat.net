@@ -14,7 +14,19 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
     /// </summary>
     public class SelectFormatter : BaseFormatter, IFormatter
     {
+        #region Public Properties
+
+        /// <summary>
+        ///     This formatter requires the input variable to exist.
+        /// </summary>
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public bool VariableMustExist => true;
+        
+        #endregion
+        
+        
         #region Public Methods and Operators
+        
 
         /// <summary>
         ///     Determines whether this instance can format a message based on the specified parameters.
@@ -34,28 +46,28 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
         /// Using the specified parameters and arguments, a formatted string shall be returned.
         /// The <see cref="IMessageFormatter" /> is being provided as well, to enable
         /// nested formatting. This is only called if <see cref="CanFormat" /> returns true.
-        /// The <see cref="args" /> will always contain the <see cref="FormatterRequest.Variable" />.
+        /// The argswill always contain the <see cref="FormatterRequest.Variable" />.
         /// </summary>
         /// <param name="locale">The locale being used. It is up to the formatter what they do with this information.</param>
         /// <param name="request">The parameters.</param>
         /// <param name="args">The arguments.</param>
-        /// <param name="value">The value of <see cref="FormatterRequest.Variable" /> from the given <see cref="args" /> dictionary. Can be null.</param>
+        /// <param name="value">The value of <see cref="FormatterRequest.Variable" /> from the given args dictionary. Can be null.</param>
         /// <param name="messageFormatter">The message formatter.</param>
         /// <returns>
         /// The <see cref="string" />.
         /// </returns>
         /// <exception cref="MessageFormatterException">'other' option not found in pattern, and variable was not present in collection.</exception>
-        [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly", 
+        [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly",
             Justification = "Reviewed. Suppression is OK here.")]
         public string Format(
-            string locale, 
+            string locale,
             FormatterRequest request,
-            IDictionary<string, object> args, 
-            object value,
+            IDictionary<string, object?> args,
+            object? value,
             IMessageFormatter messageFormatter)
         {
             var parsed = this.ParseArguments(request);
-            KeyedBlock other = null;
+            KeyedBlock? other = null;
             foreach (var keyedBlock in parsed.KeyedBlocks)
             {
                 var str = Convert.ToString(value);
@@ -63,7 +75,7 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
                 {
                     return messageFormatter.FormatMessage(keyedBlock.BlockText, args);
                 }
-                
+
                 if (keyedBlock.Key == OtherKey)
                 {
                     other = keyedBlock;

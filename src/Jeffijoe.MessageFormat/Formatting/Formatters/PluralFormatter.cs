@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
 
 namespace Jeffijoe.MessageFormat.Formatting.Formatters
 {
@@ -24,12 +23,18 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
         /// </summary>
         public PluralFormatter()
         {
-            this.Pluralizers = PluralizerConfig.Default;
+            this.Pluralizers = PluralizerConfig.Create();
         }
 
         #endregion
 
         #region Public Properties
+
+        /// <summary>
+        ///     This formatter requires the input variable to exist.
+        /// </summary>
+        public bool VariableMustExist => true;
+
 
         /// <summary>
         ///     Gets the pluralizers dictionary. Key is the locale.
@@ -61,7 +66,7 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
         ///     Using the specified parameters and arguments, a formatted string shall be returned.
         ///     The <see cref="IMessageFormatter" /> is being provided as well, to enable
         ///     nested formatting. This is only called if <see cref="CanFormat" /> returns true.
-        ///     The <see cref="args" /> will always contain the <see cref="FormatterRequest.Variable" />.
+        ///     The args will always contain the <see cref="FormatterRequest.Variable" />.
         /// </summary>
         /// <param name="locale">
         ///     The locale being used. It is up to the formatter what they do with this information.
@@ -72,7 +77,7 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
         /// <param name="args">
         ///     The arguments.
         /// </param>
-        /// <param name="value">The value of <see cref="FormatterRequest.Variable"/> from the given <see cref="args"/> dictionary. Can be null.</param>
+        /// <param name="value">The value of <see cref="FormatterRequest.Variable"/> from the given args dictionary. Can be null.</param>
         /// <param name="messageFormatter">
         ///     The message formatter.
         /// </param>
@@ -80,10 +85,10 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
         ///     The <see cref="string" />.
         /// </returns>
         public string Format(
-            string locale, 
-            FormatterRequest request, 
-            IDictionary<string, object> args, 
-            object value,
+            string locale,
+            FormatterRequest request,
+            IDictionary<string, object?> args,
+            object? value,
             IMessageFormatter messageFormatter)
         {
             var arguments = this.ParseArguments(request);
@@ -94,9 +99,11 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
                 offset = Convert.ToDouble(offsetExtension.Value);
             }
 
-            var n = Convert.ToDouble(value);
-            var pluralized = new StringBuilder(Pluralize(locale, arguments, n, offset));
-            var result = ReplaceNumberLiterals(pluralized, n - offset);
+
+            var ctx = CreatePluralContext(value, offset);
+            var pluralized = this.Pluralize(locale, arguments, ctx, offset);
+            var result = this.ReplaceNumberLiterals(pluralized, ctx.Number);
+
             var formatted = messageFormatter.FormatMessage(result, args);
             return formatted;
         }
@@ -114,11 +121,11 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
         /// <param name="arguments">
         ///     The parsed arguments string.
         /// </param>
-        /// <param name="n">
-        ///     The n.
+        /// <param name="context">
+        ///     The plural context.
         /// </param>
         /// <param name="offset">
-        ///     The offset.
+        ///     The offset (already applied in context).
         /// </param>
         /// <returns>
         ///     The <see cref="string" />.
@@ -126,18 +133,21 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
         /// <exception cref="MessageFormatterException">
         ///     The 'other' option was not found in pattern.
         /// </exception>
-        [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly", 
+        [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly",
             Justification = "Reviewed. Suppression is OK here.")]
-        internal string Pluralize(string locale, ParsedArguments arguments, double n, double offset)
+        internal string Pluralize(string locale, ParsedArguments arguments, PluralContext context, double offset)
         {
-            Pluralizer pluralizer;
-            if (!Pluralizers.TryGetPluralizer(locale, out pluralizer))
+            string pluralForm;
+            if (this.Pluralizers.TryGetPluralizer(locale, out var pluralizer))
             {
-                pluralizer = DefaultPluralizer;
+                pluralForm = pluralizer(context.Number);
+            }
+            else
+            {
+                pluralForm = DefaultPluralizer(context.Number);
             }
 
-            var pluralForm = pluralizer(n - offset);
-            KeyedBlock other = null;
+            KeyedBlock? other = null;
             foreach (var keyedBlock in arguments.KeyedBlocks)
             {
                 if (keyedBlock.Key == OtherKey)
@@ -150,7 +160,7 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
                     var numberLiteral = Convert.ToDouble(keyedBlock.Key.Substring(1));
 
                     // ReSharper disable once CompareOfFloatsByEqualityOperator
-                    if (numberLiteral == n)
+                    if (numberLiteral == context.Number + offset)
                     {
                         return keyedBlock.BlockText;
                     }
@@ -182,81 +192,129 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
         /// <returns>
         ///     The <see cref="string" />.
         /// </returns>
-        internal string ReplaceNumberLiterals(StringBuilder pluralized, double n)
+        internal string ReplaceNumberLiterals(string pluralized, double n)
         {
-            // I've done this a few times now..
-            const char OpenBrace = '{';
-            const char CloseBrace = '}';
-            const char Pound = '#';
-            const char EscapeChar = '\\';
-            var braceBalance = 0;
-            var sb = new StringBuilder();
-            for (int i = 0; i < pluralized.Length; i++)
-            {
-                var c = pluralized[i];
+            var sb = StringBuilderPool.Get();
 
-                if (c == OpenBrace)
+            try
+            {
+                // I've done this a few times now..
+                const char OpenBrace = '{';
+                const char CloseBrace = '}';
+                const char Pound = '#';
+                const char EscapeChar = '\'';
+                var braceBalance = 0;
+                var insideEscapeSequence = false;
+                for (int i = 0; i < pluralized.Length; i++)
                 {
-                    if (i != 0)
+                    var c = pluralized[i];
+
+                    if (c == EscapeChar)
                     {
-                        if (pluralized[i - 1] != EscapeChar)
+                        // Append it anyway because the escae
+                        sb.Append(EscapeChar);
+
+                        if (i == pluralized.Length - 1)
                         {
-                            braceBalance++;
-                        }
-                    }
-                }
-                else if (c == CloseBrace)
-                {
-                    if (i != 0)
-                    {
-                        if (pluralized[i - 1] != EscapeChar)
-                        {
-                            braceBalance--;
-                        }
-                    }
-                }
-                else if (c == Pound)
-                {
-                    if (i != 0)
-                    {
-                        if (pluralized[i - 1] != EscapeChar)
-                        {
-                            if (braceBalance == 0)
+                            // The last char can't open a new escape sequence, it can only close one
+                            if (insideEscapeSequence)
                             {
-                                sb.Append(n);
-                                continue;
+                                insideEscapeSequence = false;
                             }
+
+                            continue;
                         }
-                    }
-                    else
-                    {
-                        sb.Append(n);
+
+                        var nextChar = pluralized[i + 1];
+                        if (nextChar == EscapeChar)
+                        {
+                            sb.Append(EscapeChar);
+                            ++i;
+                            continue;
+                        }
+
+                        if (insideEscapeSequence)
+                        {
+                            insideEscapeSequence = false;
+                            continue;
+                        }
+
+                        if (nextChar is '{' or '}' or '#')
+                        {
+                            sb.Append(nextChar);
+                            insideEscapeSequence = true;
+                            ++i;
+                        }
+
                         continue;
                     }
-                }
-                else if (c == EscapeChar)
-                {
-                    if (i != pluralized.Length)
+
+                    if (insideEscapeSequence)
                     {
-                        if (pluralized[i + 1] == Pound)
+                        sb.Append(c);
+                        continue;
+                    }
+
+                    if (c == OpenBrace)
+                    {
+                        braceBalance++;
+                    }
+                    else if (c == CloseBrace)
+                    {
+                        braceBalance--;
+                    }
+                    else if (c == Pound)
+                    {
+                        if (braceBalance == 0)
                         {
-                            continue; // Next one is an escaped number literal, so we don't want the escaping char.
+                            sb.Append(n);
+                            continue;
                         }
                     }
+
+                    sb.Append(c);
                 }
 
-                sb.Append(c);
+                return sb.ToString();
             }
-
-            return sb.ToString();
+            finally
+            {
+                StringBuilderPool.Return(sb);
+            }
         }
 
-        private static Pluralizer DefaultPluralizer
+        private static Pluralizer DefaultPluralizer => n => "other";
+
+        /// <summary>
+        ///     Creates a <see cref="PluralContext"/> for the specified value.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        [ExcludeFromCodeCoverage]
+        private static PluralContext CreatePluralContext(object? value, double offset)
         {
-            get
+            if (offset == 0)
             {
-                return n => "other";
+                if (value is string v)
+                {
+                    return new PluralContext(v);
+                }
+
+                if (value is int i)
+                {
+                    return new PluralContext(i);
+                }
+
+                if (value is decimal d)
+                {
+                    return new PluralContext(d);
+                }
+
+                return new PluralContext(Convert.ToDouble(value));
             }
+
+            return new PluralContext(Convert.ToDouble(value) - offset);
         }
 
         #endregion

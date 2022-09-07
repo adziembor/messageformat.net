@@ -3,6 +3,7 @@
 // Author: Jeff Hansen <jeff@jeffijoe.com>
 // Copyright (C) Jeff Hansen 2014. All rights reserved.
 
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -30,7 +31,7 @@ namespace Jeffijoe.MessageFormat.Helpers
             var properties = new List<PropertyInfo>();
             var type = obj.GetType();
             var typeInfo = type.GetTypeInfo();
-            while (typeInfo != null)
+            while (true)
             {
                 properties.AddRange(typeInfo.DeclaredProperties);
                 if (typeInfo.BaseType == null)
@@ -51,14 +52,14 @@ namespace Jeffijoe.MessageFormat.Helpers
         ///     The object.
         /// </param>
         /// <returns>
-        ///     The <see cref="Dictionary" />.
+        ///     The <see cref="IDictionary" />.
         /// </returns>
-        internal static Dictionary<string, object> ToDictionary(this object obj)
+        internal static Dictionary<string, object?> ToDictionary(this object obj)
         {
             // We want to be able to read the property, and it should not be an indexer.
             var properties = GetProperties(obj).Where(x => x.CanRead && x.GetIndexParameters().Any() == false);
 
-            var result = new Dictionary<string, object>();
+            var result = new Dictionary<string, object?>();
             foreach (var propertyInfo in properties)
             {
                 result[propertyInfo.Name] = propertyInfo.GetValue(obj);

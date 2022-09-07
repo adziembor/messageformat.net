@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Jeffijoe.MessageFormat.Formatting.Formatters;
 
 namespace Jeffijoe.MessageFormat.Pluralizers
 {
-    public class DictionaryPluralizerCollection : IPluralizerCollection
+    public class DictionaryPluralizerCollection : IPluralizerCollection,
+        IEnumerable<KeyValuePair<string, Pluralizer>>
     {
         private readonly Dictionary<string, Pluralizer> _collection =
             new Dictionary<string, Pluralizer>(StringComparer.InvariantCultureIgnoreCase);
@@ -19,9 +21,19 @@ namespace Jeffijoe.MessageFormat.Pluralizers
             return false;
         }
 
+        public void Add(string name, Pluralizer pluralizer)
+        {
+            _collection.Add(name, pluralizer);
+        }
+
         public bool TryGetPluralizer(string name, out Pluralizer pluralizer)
         {
             return _collection.TryGetValue(name, out pluralizer);
         }
+
+        IEnumerator IEnumerable.GetEnumerator() => _collection.GetEnumerator();
+
+        public IEnumerator<KeyValuePair<string, Pluralizer>> GetEnumerator()
+            => _collection.GetEnumerator();
     }
 }

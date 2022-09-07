@@ -1,6 +1,6 @@
 ﻿// MessageFormat for .NET
 // - MessageFormatter_caching_tests.cs
-// 
+//
 // Author: Jeff Hansen <jeff@jeffijoe.com>
 // Copyright (C) Jeff Hansen 2015. All rights reserved.
 
@@ -11,8 +11,7 @@ using System.Text;
 using Jeffijoe.MessageFormat.Formatting;
 using Jeffijoe.MessageFormat.Helpers;
 using Jeffijoe.MessageFormat.Parsing;
-
-using Moq;
+using Jeffijoe.MessageFormat.Tests.TestHelpers;
 
 using Xunit;
 using Xunit.Abstractions;
@@ -56,29 +55,26 @@ namespace Jeffijoe.MessageFormat.Tests
         [Fact]
         public void FormatMessage_caches_reused_pattern()
         {
-            var parserMock = new Mock<IPatternParser>();
-            var realParser = new PatternParser(new LiteralParser());
-            parserMock.Setup(x => x.Parse(It.IsAny<StringBuilder>()))
-                      .Returns((StringBuilder sb) => realParser.Parse(sb));
+            var parser = new TrackingPatternParser();
             var library = new FormatterLibrary();
 
-            var subject = new MessageFormatter(patternParser: parserMock.Object, library: library, useCache: true);
+            var subject = new MessageFormatter(patternParser: parser, library: library, useCache: true);
 
             var pattern = "Hi {gender, select, male {Sir} female {Ma'am}}!";
             var actual = subject.FormatMessage(pattern, new { gender = "male" });
             Assert.Equal("Hi Sir!", actual);
 
             // '2' because it did not format "Ma'am" yet.
-            parserMock.Verify(x => x.Parse(It.IsAny<StringBuilder>()), Times.Exactly(2));
+            Assert.Equal(2, parser.ParseCount);
 
             actual = subject.FormatMessage(pattern, new { gender = "female" });
             Assert.Equal("Hi Ma'am!", actual);
-            parserMock.Verify(x => x.Parse(It.IsAny<StringBuilder>()), Times.Exactly(3));
+            Assert.Equal(3, parser.ParseCount);
 
             // '3' because it has cached all options
             actual = subject.FormatMessage(pattern, new { gender = "female" });
             Assert.Equal("Hi Ma'am!", actual);
-            parserMock.Verify(x => x.Parse(It.IsAny<StringBuilder>()), Times.Exactly(3));
+            Assert.Equal(3, parser.ParseCount);
         }
 
         /// <summary>
@@ -87,7 +83,7 @@ namespace Jeffijoe.MessageFormat.Tests
         [Fact]
         public void FormatMessage_with_cache_benchmark()
         {
-            var subject = new MessageFormatter(true);
+            var subject = new MessageFormatter(useCache: true);
             this.Benchmark(subject);
         }
 
@@ -114,13 +110,13 @@ namespace Jeffijoe.MessageFormat.Tests
         private void Benchmark(MessageFormatter subject)
         {
             var pattern = "\r\n----\r\nOh {name}? And if we were " + "to surround {gender, select, " + "male {his} "
-                          + "female {her}" + "} name with \\{ and \\}, it would look "
-                          + "like \\{{name}\\}? Yeah, I know {gender, select, " + "male {him} " + "female {her}"
+                          + "female {her}" + "} name with '{' and '}', it would look "
+                          + "like '{'{name}'}'? Yeah, I know {gender, select, " + "male {him} " + "female {her}"
                           + "}. {gender, select, " + "male {He's}" + "female {She's}" + "} got {messageCount, plural, "
                           + "zero {no messages}" + "one {just one message}" + "=42 {a universal amount of messages}"
-                          + "other {uuhm... let's see.. Oh yeah, # messages - and here's a pound: \\#}" + "}!";
+                          + "other {uuhm... let's see.. Oh yeah, # messages - and here's a pound: '#'}" + "}!";
             int iterations = 100000;
-            var args = new Dictionary<string, object>[iterations];
+            var args = new Dictionary<string, object?>[iterations];
             var rnd = new Random();
             for (int i = 0; i < iterations; i++)
             {
@@ -128,8 +124,8 @@ namespace Jeffijoe.MessageFormat.Tests
                 args[i] =
                     new
                     {
-                        gender = val % 2 == 0 ? "male" : "female", 
-                        name = val % 2 == 0 ? "Jeff" : "Amanda", 
+                        gender = val % 2 == 0 ? "male" : "female",
+                        name = val % 2 == 0 ? "Jeff" : "Marcela",
                         messageCount = val
                     }.ToDictionary();
             }

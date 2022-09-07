@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
-
 using Jeffijoe.MessageFormat.Formatting;
 using Jeffijoe.MessageFormat.Formatting.Formatters;
 using Jeffijoe.MessageFormat.Helpers;
@@ -41,7 +40,7 @@ namespace Jeffijoe.MessageFormat
         ///     Pattern cache. If enabled, should speed up formatting the same pattern multiple times,
         ///     regardless of arguments.
         /// </summary>
-        private readonly ConcurrentDictionary<string, IFormatterRequestCollection> cache;
+        private readonly ConcurrentDictionary<string, IFormatterRequestCollection>? cache;
 
         /// <summary>
         ///     The formatter library.
@@ -87,23 +86,13 @@ namespace Jeffijoe.MessageFormat
         ///     The locale to use. Formatters may need this.
         /// </param>
         internal MessageFormatter(
-            IPatternParser patternParser, 
-            IFormatterLibrary library, 
-            bool useCache, 
+            IPatternParser patternParser,
+            IFormatterLibrary library,
+            bool useCache,
             string locale = "en")
         {
-            if (patternParser == null)
-            {
-                throw new ArgumentNullException("patternParser");
-            }
-
-            if (library == null)
-            {
-                throw new ArgumentNullException("library");
-            }
-
-            this.patternParser = patternParser;
-            this.library = library;
+            this.patternParser = patternParser ?? throw new ArgumentNullException("patternParser");
+            this.library = library ?? throw new ArgumentNullException("library");
             this.Locale = locale;
             if (useCache)
             {
@@ -123,10 +112,7 @@ namespace Jeffijoe.MessageFormat
         /// </value>
         public IFormatterLibrary Formatters
         {
-            get
-            {
-                return this.library;
-            }
+            get { return this.library; }
         }
 
         /// <summary>
@@ -143,17 +129,14 @@ namespace Jeffijoe.MessageFormat
         /// <value>
         ///     The pluralizers, or <c>null</c> if the plural formatter has not been added.
         /// </value>
-        public IPluralizerCollection Pluralizers
+
+        public IPluralizerCollection? Pluralizers
+
         {
             get
             {
                 var pluralFormatter = this.Formatters.OfType<PluralFormatter>().FirstOrDefault();
-                if (pluralFormatter == null)
-                {
-                    return null;
-                }
-                
-                return pluralFormatter.Pluralizers;
+                return pluralFormatter?.Pluralizers;
             }
         }
 
@@ -165,7 +148,7 @@ namespace Jeffijoe.MessageFormat
         ///     Formats the specified pattern with the specified data.
         /// </summary>
         /// <remarks>
-        ///     This method calls <see cref="FormatMessage(string,System.Collections.Generic.Dictionary{string,object})" />
+        ///     This method calls <see cref="Format(string, IDictionary{string, object})"/>
         ///     on a singleton instance using a lock.
         ///     Do not use in a tight loop, as a lock is being used to ensure thread safety.
         /// </remarks>
@@ -178,7 +161,7 @@ namespace Jeffijoe.MessageFormat
         /// <returns>
         ///     The formatted message.
         /// </returns>
-        public static string Format(string pattern, IDictionary<string, object> data)
+        public static string Format(string pattern, IDictionary<string, object?> data)
         {
             lock (Lock)
             {
@@ -222,59 +205,54 @@ namespace Jeffijoe.MessageFormat
         /// <returns>
         ///     The <see cref="string" />.
         /// </returns>
-        public string FormatMessage(string pattern, IDictionary<string, object> args)
+        public string FormatMessage(string pattern, IDictionary<string, object?> args)
         {
             /*
-             * We are asuming the formatters are ordered correctly
+             * We are assuming the formatters are ordered correctly
              * - that is, from left to right, string-wise.
              */
-            var sourceBuilder = new StringBuilder(pattern);
-            var requests = this.ParseRequests(pattern, sourceBuilder);
-            var requestsEnumerated = requests.ToArray();
+            var sourceBuilder = StringBuilderPool.Get();
 
-            // If we got no formatters, then we're done here.
-            if (requestsEnumerated.Length == 0)
+            try
             {
-                return pattern;
-            }
+                sourceBuilder.Append(pattern);
+                var requests = this.ParseRequests(pattern, sourceBuilder);
 
-            for (int i = 0; i < requestsEnumerated.Length; i++)
+                for (int i = 0; i < requests.Count; i++)
+                {
+                    var request = requests[i];
+
+                    var formatter = this.Formatters.GetFormatter(request);
+
+                    if (args.TryGetValue(request.Variable, out var value) == false && formatter.VariableMustExist)
+                    {
+                        throw new VariableNotFoundException(request.Variable);
+                    }
+
+                    // Double dispatch, yeah!
+                    var result = formatter.Format(this.Locale, request, args, value, this);
+
+                    // First, we remove the literal from the source.
+                    Literal sourceLiteral = request.SourceLiteral;
+
+                    // +1 because we want to include the last index.
+                    var length = (sourceLiteral.EndIndex - sourceLiteral.StartIndex) + 1;
+                    sourceBuilder.Remove(sourceLiteral.StartIndex, length);
+
+                    // Now, we inject the result.
+                    sourceBuilder.Insert(sourceLiteral.StartIndex, result);
+
+                    // The next requests will want to know what happened.
+                    requests.ShiftIndices(i, result.Length);
+                }
+
+                // And we're done.
+                return MessageFormatter.UnescapeLiterals(sourceBuilder);
+            }
+            finally
             {
-                var request = requestsEnumerated[i];
-
-                object value;
-                if (args.TryGetValue(request.Variable, out value) == false)
-                {
-                    throw new VariableNotFoundException(request.Variable);
-                }
-                
-                var formatter = this.Formatters.GetFormatter(request);
-                if (formatter == null)
-                {
-                    throw new FormatterNotFoundException(request);
-                }
-
-                // Double dispatch, yeah!
-                var result = formatter.Format(this.Locale, request, args, value, this);
-
-                // First, we remove the literal from the source.
-                Literal sourceLiteral = request.SourceLiteral;
-
-                // +1 because we want to include the last index.
-                var length = (sourceLiteral.EndIndex - sourceLiteral.StartIndex) + 1;
-                sourceBuilder.Remove(sourceLiteral.StartIndex, length);
-
-                // Now, we inject the result.
-                sourceBuilder.Insert(sourceLiteral.StartIndex, result);
-
-                // The next requests will want to know what happened.
-                requests.ShiftIndices(i, result.Length);
+                StringBuilderPool.Return(sourceBuilder);
             }
-
-            sourceBuilder = this.UnescapeLiterals(sourceBuilder);
-
-            // And we're done.
-            return sourceBuilder.ToString();
         }
 
         /// <summary>
@@ -307,52 +285,76 @@ namespace Jeffijoe.MessageFormat
         /// <returns>
         ///     The <see cref="StringBuilder" />.
         /// </returns>
-        protected internal StringBuilder UnescapeLiterals(StringBuilder sourceBuilder)
+        internal static string UnescapeLiterals(StringBuilder sourceBuilder)
         {
             // If the block is empty, do nothing.
             if (sourceBuilder.Length == 0)
             {
-                return new StringBuilder();
+                return string.Empty;
             }
 
-            var dest = new StringBuilder(sourceBuilder.Length, sourceBuilder.Length);
-            int length = sourceBuilder.Length;
-            const char EscapeChar = '\\';
-            const char OpenBrace = '{';
-            const char CloseBrace = '}';
-            var braceBalance = 0;
-            for (int i = 0; i < length; i++)
+            const char EscapingChar = '\'';
+
+            if (!sourceBuilder.Contains(EscapingChar))
             {
-                var c = sourceBuilder[i];
-                if (c == EscapeChar)
-                {
-                    if (i != length - 1)
-                    {
-                        char next = sourceBuilder[i + 1];
-                        if (next == OpenBrace && braceBalance == 0)
-                        {
-                            continue;
-                        }
-
-                        if (next == CloseBrace && braceBalance == 1)
-                        {
-                            continue;
-                        }
-                    }
-                }
-                else if (c == OpenBrace)
-                {
-                    braceBalance++;
-                }
-                else if (c == CloseBrace)
-                {
-                    braceBalance--;
-                }
-
-                dest.Append(c);
+                return sourceBuilder.ToString();
             }
 
-            return dest;
+            var length = sourceBuilder.Length;
+            var insideEscapeSequence = false;
+
+            var dest = StringBuilderPool.Get();
+
+            try
+            {
+                for (int i = 0; i < length; i++)
+                {
+                    var c = sourceBuilder[i];
+
+                    if (c == EscapingChar)
+                    {
+                        if (i == length - 1)
+                        {
+                            if (!insideEscapeSequence)
+                                dest.Append(EscapingChar);
+                            continue;
+                        }
+
+                        var nextChar = sourceBuilder[i + 1];
+                        if (nextChar == EscapingChar)
+                        {
+                            dest.Append(EscapingChar);
+                            ++i;
+                            continue;
+                        }
+
+                        if (insideEscapeSequence)
+                        {
+                            insideEscapeSequence = false;
+                            continue;
+                        }
+
+                        if (nextChar == '{' || nextChar == '}' || nextChar == '#')
+                        {
+                            dest.Append(nextChar);
+                            insideEscapeSequence = true;
+                            ++i;
+                            continue;
+                        }
+
+                        dest.Append(EscapingChar);
+                        continue;
+                    }
+
+                    dest.Append(c);
+                }
+
+                return dest.ToString();
+            }
+            finally
+            {
+                StringBuilderPool.Return(dest);
+            }
         }
 
         /// <summary>
@@ -376,17 +378,13 @@ namespace Jeffijoe.MessageFormat
             }
 
             // If we have a cached result from this pattern, clone it and return the clone.
-            IFormatterRequestCollection cached;
-            if (this.cache.TryGetValue(pattern, out cached))
+            if (this.cache.TryGetValue(pattern, out var cached))
             {
                 return cached.Clone();
             }
 
             var requests = this.patternParser.Parse(sourceBuilder);
-            if (this.cache != null)
-            {
-                this.cache.TryAdd(pattern, requests.Clone());
-            }
+            this.cache?.TryAdd(pattern, requests.Clone());
 
             return requests;
         }

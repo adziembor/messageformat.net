@@ -7,10 +7,11 @@ using System.Threading.Tasks;
 
 namespace Jeffijoe.MessageFormat.Pluralizers
 {
-    internal static class DictionaryExtensions {
+    internal static class DictionaryExtensions
+    {
         public static void AddRange<T>(this IDictionary<string, T> dict, string[] range, T value)
         {
-            foreach(var k in range)
+            foreach (var k in range)
                 dict.Add(k, value);
         }
     }
@@ -35,7 +36,7 @@ namespace Jeffijoe.MessageFormat.Pluralizers
                     (i % 1 == 0 && i % 10 >= 2 && i % 10 <= 4 && (i % 100 < 12 || i % 100 > 14)) ? "few" : (
                     (i % 1 == 0) ? "many" : "other")));
         }
-        
+
         public bool TryAddPluralizer(string name, Pluralizer pluralizer)
         {
             return false;

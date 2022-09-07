@@ -8,10 +8,13 @@ namespace Jeffijoe.MessageFormat.Pluralizers
 {
     public static class PluralizerConfig
     {
-        public static readonly IPluralizerCollection Default = 
-            new FindingPluralizerCollection(
+        public static readonly IPluralizerCollection DefaultPluralizer
+            = new DefaultPluralizerCollection();
+
+        public static IPluralizerCollection Create()
+            => new FindingPluralizerCollection(
                 new OverlayingPluralizerCollection(
-                    new DefaultPluralizerCollection(),
+                    DefaultPluralizer,
                     new DictionaryPluralizerCollection()));
     }
 }

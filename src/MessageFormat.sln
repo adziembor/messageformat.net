@@ -1,18 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31112.23
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jeffijoe.MessageFormat", "Jeffijoe.MessageFormat\Jeffijoe.MessageFormat.csproj", "{1D71E97E-9A49-4336-8B8E-242736F44399}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jeffijoe.MessageFormat", "Jeffijoe.MessageFormat\Jeffijoe.MessageFormat.csproj", "{7D16B114-A482-4FC4-A055-8E96573BE2A3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jeffijoe.MessageFormat.Tests", "Jeffijoe.MessageFormat.Tests\Jeffijoe.MessageFormat.Tests.csproj", "{B1D8C0CB-2B7D-449F-9AD7-EDF69BD59712}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jeffijoe.MessageFormat.Tests", "Jeffijoe.MessageFormat.Tests\Jeffijoe.MessageFormat.Tests.csproj", "{F1AC744E-9031-468E-A397-6F44AA19EBA1}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{938BF7EF-948B-4EC5-B133-B1674A165411}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.exe = .nuget\NuGet.exe
-		.nuget\NuGet.targets = .nuget\NuGet.targets
-	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jeffijoe.MessageFormat.MetadataGenerator", "Jeffijoe.MessageFormat.MetadataGenerator\Jeffijoe.MessageFormat.MetadataGenerator.csproj", "{5431C848-23D1-4752-A9B0-5159E5B2F92E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,16 +15,23 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{1D71E97E-9A49-4336-8B8E-242736F44399}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1D71E97E-9A49-4336-8B8E-242736F44399}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1D71E97E-9A49-4336-8B8E-242736F44399}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1D71E97E-9A49-4336-8B8E-242736F44399}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B1D8C0CB-2B7D-449F-9AD7-EDF69BD59712}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B1D8C0CB-2B7D-449F-9AD7-EDF69BD59712}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B1D8C0CB-2B7D-449F-9AD7-EDF69BD59712}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B1D8C0CB-2B7D-449F-9AD7-EDF69BD59712}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D16B114-A482-4FC4-A055-8E96573BE2A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D16B114-A482-4FC4-A055-8E96573BE2A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D16B114-A482-4FC4-A055-8E96573BE2A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D16B114-A482-4FC4-A055-8E96573BE2A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1AC744E-9031-468E-A397-6F44AA19EBA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1AC744E-9031-468E-A397-6F44AA19EBA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1AC744E-9031-468E-A397-6F44AA19EBA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1AC744E-9031-468E-A397-6F44AA19EBA1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5431C848-23D1-4752-A9B0-5159E5B2F92E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5431C848-23D1-4752-A9B0-5159E5B2F92E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5431C848-23D1-4752-A9B0-5159E5B2F92E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5431C848-23D1-4752-A9B0-5159E5B2F92E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A7BC8D54-673A-497B-A89E-B5D1BC8CD506}
 	EndGlobalSection
 EndGlobal

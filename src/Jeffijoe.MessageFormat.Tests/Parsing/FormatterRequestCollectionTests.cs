@@ -5,8 +5,6 @@
 // Copyright (C) Jeff Hansen 2015. All rights reserved.
 
 using System.Linq;
-using System.Text;
-
 using Jeffijoe.MessageFormat.Formatting;
 using Jeffijoe.MessageFormat.Parsing;
 
@@ -30,19 +28,19 @@ namespace Jeffijoe.MessageFormat.Tests.Parsing
             var subject = new FormatterRequestCollection();
             subject.Add(
                 new FormatterRequest(
-                    new Literal(0, 9, 1, 1, new StringBuilder(new string('a', 10))), 
+                    new Literal(0, 9, 1, 1, new string('a', 10)), 
                     "test", 
                     "test", 
                     "test"));
             subject.Add(
                 new FormatterRequest(
-                    new Literal(10, 19, 1, 1, new StringBuilder(new string('a', 10))), 
+                    new Literal(10, 19, 1, 1, new string('a', 10)), 
                     "test", 
                     "test", 
                     "test"));
             subject.Add(
                 new FormatterRequest(
-                    new Literal(20, 29, 1, 1, new StringBuilder(new string('a', 10))), 
+                    new Literal(20, 29, 1, 1, new string('a', 10)), 
                     "test", 
                     "test", 
                     "test"));
@@ -52,9 +50,9 @@ namespace Jeffijoe.MessageFormat.Tests.Parsing
 
             foreach (var clonedReq in cloned)
             {
-                Assert.False(subject.Any(x => ReferenceEquals(x, clonedReq)));
-                Assert.False(subject.Any(x => x.SourceLiteral == clonedReq.SourceLiteral));
-                Assert.True(subject.Any(x => x.SourceLiteral.StartIndex == clonedReq.SourceLiteral.StartIndex));
+                Assert.DoesNotContain(subject, x => ReferenceEquals(x, clonedReq));
+                Assert.DoesNotContain(subject, x => x.SourceLiteral == clonedReq.SourceLiteral);
+                Assert.Contains(subject, x => x.SourceLiteral.StartIndex == clonedReq.SourceLiteral.StartIndex);
             }
         }
 
@@ -67,19 +65,19 @@ namespace Jeffijoe.MessageFormat.Tests.Parsing
             var subject = new FormatterRequestCollection();
             subject.Add(
                 new FormatterRequest(
-                    new Literal(0, 9, 1, 1, new StringBuilder(new string('a', 10))), 
+                    new Literal(0, 9, 1, 1, new string('a', 10)), 
                     "test", 
                     "test", 
                     "test"));
             subject.Add(
                 new FormatterRequest(
-                    new Literal(10, 19, 1, 1, new StringBuilder(new string('a', 10))), 
+                    new Literal(10, 19, 1, 1, new string('a', 10)), 
                     "test", 
                     "test", 
                     "test"));
             subject.Add(
                 new FormatterRequest(
-                    new Literal(20, 29, 1, 1, new StringBuilder(new string('a', 10))), 
+                    new Literal(20, 29, 1, 1, new string('a', 10)), 
                     "test", 
                     "test", 
                     "test"));

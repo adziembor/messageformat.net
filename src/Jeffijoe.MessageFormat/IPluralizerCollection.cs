@@ -1,4 +1,5 @@
-﻿using Jeffijoe.MessageFormat.Pluralizers;
+﻿using Jeffijoe.MessageFormat.Formatting.Formatters;
+using Jeffijoe.MessageFormat.Pluralizers;
 
 namespace Jeffijoe.MessageFormat
 {

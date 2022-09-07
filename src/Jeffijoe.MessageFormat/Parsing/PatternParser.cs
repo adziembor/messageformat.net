@@ -6,7 +6,6 @@
 using System;
 using System.Linq;
 using System.Text;
-
 using Jeffijoe.MessageFormat.Formatting;
 using Jeffijoe.MessageFormat.Helpers;
 
@@ -31,16 +30,18 @@ namespace Jeffijoe.MessageFormat.Parsing
         /// <summary>
         ///     Initializes a new instance of the <see cref="PatternParser" /> class.
         /// </summary>
+        public PatternParser() : this(new LiteralParser())
+        {
+        }
+        
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="PatternParser" /> class.
+        /// </summary>
         /// <param name="literalParser">
         ///     The literal parser.
         /// </param>
         public PatternParser(ILiteralParser literalParser)
         {
-            if (literalParser == null)
-            {
-                throw new ArgumentNullException("literalParser");
-            }
-
             this.literalParser = literalParser;
         }
 
@@ -69,21 +70,26 @@ namespace Jeffijoe.MessageFormat.Parsing
             foreach (var literal in literals)
             {
                 // The first token to follow an opening brace will be the variable name.
-                int lastIndex;
-                string variableName = ReadLiteralSection(literal, 0, false, out lastIndex);
+                var variableName = ReadLiteralSection(literal, 0, false, out var lastIndex)!;
 
                 // The next (if any), is the formatter to use. Null is allowed.
-                string formatterKey = null;
+                string? formatterKey = null;
 
                 // The rest of the string is what we pass into the formatter. Can be null.
-                string formatterArgs = null;
+                string? formatterArgs = null;
                 if (variableName.Length != literal.InnerText.Length)
                 {
-                    formatterKey = ReadLiteralSection(literal, variableName.Length + 1, true, out lastIndex);
+                    formatterKey = ReadLiteralSection(literal, lastIndex + 1, true, out lastIndex);
                     if (formatterKey != null)
                     {
+#if NET5_0_OR_GREATER
                         formatterArgs =
-                            literal.InnerText.ToString(lastIndex + 1, literal.InnerText.Length - lastIndex - 1).Trim();
+                            literal.InnerText.AsSpan(lastIndex + 1, literal.InnerText.Length - lastIndex - 1).Trim()
+                                .ToString();
+#else
+                        formatterArgs =
+                            literal.InnerText.Substring(lastIndex + 1, literal.InnerText.Length - lastIndex - 1).Trim();
+#endif
                     }
                 }
 
@@ -119,79 +125,100 @@ namespace Jeffijoe.MessageFormat.Parsing
         /// <exception cref="MalformedLiteralException">
         ///     Parsing the variable key yielded an empty string.
         /// </exception>
-        internal static string ReadLiteralSection(Literal literal, int offset, bool allowEmptyResult, out int lastIndex)
+        internal static string? ReadLiteralSection(Literal literal, int offset, bool allowEmptyResult,
+            out int lastIndex)
         {
             const char Comma = ',';
-            var sb = new StringBuilder();
+
             var innerText = literal.InnerText;
             var column = literal.SourceColumnNumber;
             var foundWhitespace = false;
             lastIndex = 0;
-            for (var i = offset; i < innerText.Length; i++)
+            var sb = StringBuilderPool.Get();
+            try
             {
-                var c = innerText[i];
-                column++;
-                lastIndex = i;
-                if (c == Comma)
+                for (var i = offset; i < innerText.Length; i++)
                 {
-                    break;
-                }
-
-                // Disregard whitespace.
-                var whitespace = c == ' ' || c == '\r' || c == '\n' || c == '\t';
-                if (!whitespace)
-                {
-                    if (c.IsAlphaNumeric() == false)
+                    var c = innerText[i];
+                    column++;
+                    lastIndex = i;
+                    if (c == Comma)
                     {
-                        var msg = string.Format("Invalid literal character '{0}'.", c);
-
-                        // Line number can't have changed.
-                        throw new MalformedLiteralException(msg, literal.SourceLineNumber, column, innerText.ToString());
+                        break;
                     }
-                }
-                else
-                {
-                    foundWhitespace = true;
+
+                    // Disregard whitespace.
+                    var whitespace = char.IsWhiteSpace(c);
+                    if (!whitespace)
+                    {
+                        if (c.IsAlphaNumeric() == false)
+                        {
+                            var msg = $"Invalid literal character '{c}'.";
+
+                            // Line number can't have changed.
+                            throw new MalformedLiteralException(
+                                msg, 
+                                literal.SourceLineNumber, 
+                                column,
+                                innerText);
+                        }
+                    }
+                    else
+                    {
+                        foundWhitespace = true;
+                    }
+
+                    sb.Append(c);
                 }
 
-                sb.Append(c);
-            }
-
-            if (sb.Length != 0)
-            {
-                // Trim whitespace from beginning and end of the string, if necessary.
-                if (!foundWhitespace)
+                if (sb.Length != 0)
                 {
+                    // Trim whitespace from beginning and end of the string, if necessary.
+                    if (!foundWhitespace)
+                    {
+                        return sb.ToString();
+                    }
+
+                    StringBuilder trimmed = sb.TrimWhitespace();
+                    if (trimmed.Length == 0)
+                    {
+                        if (allowEmptyResult)
+                        {
+                            return null;
+                        }
+
+                        throw new MalformedLiteralException(
+                            "Parsing the literal yielded a string that was pure whitespace.",
+                            literal.SourceLineNumber,
+                            column);
+                    }
+
+                    if (trimmed.ContainsWhitespace())
+                    {
+                        throw new MalformedLiteralException(
+                            "Parsed literal must not contain whitespace.",
+                            0,
+                            0,
+                            trimmed.ToString());
+                    }
+
                     return sb.ToString();
                 }
 
-                StringBuilder trimmed = sb.TrimWhitespace();
-                if (trimmed.Length == 0)
+                if (allowEmptyResult)
                 {
                     return null;
                 }
 
-                if (trimmed.ContainsWhitespace())
-                {
-                    throw new MalformedLiteralException(
-                        "Parsed literal must not contain whitespace.", 
-                        0, 
-                        0, 
-                        trimmed.ToString());
-                }
-
-                return sb.ToString();
+                throw new MalformedLiteralException(
+                    "Parsing the literal yielded an empty string.",
+                    literal.SourceLineNumber,
+                    column);
             }
-
-            if (allowEmptyResult)
+            finally
             {
-                return null;
+                StringBuilderPool.Return(sb);
             }
-
-            throw new MalformedLiteralException(
-                "Parsing the literal yielded an empty string.", 
-                literal.SourceLineNumber, 
-                column);
         }
 
         #endregion

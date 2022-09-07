@@ -9,6 +9,8 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
 {
     public class DateFormatter : IFormatter
     {
+        public bool VariableMustExist => true;
+
         public bool CanFormat(FormatterRequest request)
         {
             return request.FormatterName == "date";
@@ -16,7 +18,7 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
 
         public DateTime CastDate(object value)
         {
-            if(value is long)
+            if (value is long)
                 return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((long)value);
             if (value is ulong)
                 return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((ulong)value);
@@ -35,7 +37,7 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
         {
             var d = CastDate(value);
             var c = new CultureInfo(locale).DateTimeFormat;
-            if(request.FormatterArguments == "short")
+            if (request.FormatterArguments == "short")
             {
                 return d.ToString("d", c);
             }
@@ -55,7 +57,7 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
                 return d.ToString("D", c);
             }
 
-            throw new FormatException("Invalid date format: "+request.FormatterArguments);
+            throw new FormatException("Invalid date format: " + request.FormatterArguments);
         }
     }
 }

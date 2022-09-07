@@ -1,16 +1,13 @@
 ﻿// MessageFormat for .NET
 // - PatternParser_Parse_Tests.cs
-// 
+//
 // Author: Jeff Hansen <jeff@jeffijoe.com>
 // Copyright (C) Jeff Hansen 2015. All rights reserved.
 
-using System.Linq;
 using System.Text;
 
 using Jeffijoe.MessageFormat.Parsing;
 using Jeffijoe.MessageFormat.Tests.TestHelpers;
-
-using Moq;
 
 using Xunit;
 using Xunit.Abstractions;
@@ -66,18 +63,16 @@ namespace Jeffijoe.MessageFormat.Tests.Parsing
         [Theory]
         [InlineData("test, select, args", "test", "select", "args")]
         [InlineData("test, select, stuff {dawg}", "test", "select", "stuff {dawg}")]
-        [InlineData("test, select, stuff \\{{dawg}\\}", "test", "select", "stuff \\{{dawg}\\}")]
-        [InlineData("test, select, stuff {dawg, select, {name is \\{{name}\\}}}", "test", "select", 
-            "stuff {dawg, select, {name is \\{{name}\\}}}")]
+        [InlineData("test, select, stuff {dawg's}", "test", "select", "stuff {dawg's}")]
+        [InlineData("test, select, stuff {dawg''s}", "test", "select", "stuff {dawg''s}")]
+        [InlineData("test, select, stuff '{{dawg}}'", "test", "select", "stuff '{{dawg}}'")]
+        [InlineData("test, select, stuff {dawg, select, {name is '{'{name}'}'}}", "test", "select",
+            "stuff {dawg, select, {name is '{'{name}'}'}}")]
         public void Parse(string source, string expectedKey, string expectedFormat, string expectedArgs)
         {
-            var literalParserMock = new Mock<ILiteralParser>();
+            var literalParser = FakeLiteralParser.Of(source);
             var sb = new StringBuilder(source);
-            literalParserMock.Setup(x => x.ParseLiterals(sb));
-            literalParserMock.Setup(x => x.ParseLiterals(sb))
-                             .Returns(new[] { new Literal(0, source.Length, 1, 1, new StringBuilder(source)) });
-
-            var subject = new PatternParser(literalParserMock.Object);
+            var subject = new PatternParser(literalParser);
 
             // Warm up (JIT)
             Benchmark.Start("Parsing formatter patterns (first time before JIT)", this.outputHelper);
@@ -86,8 +81,8 @@ namespace Jeffijoe.MessageFormat.Tests.Parsing
             Benchmark.Start("Parsing formatter patterns (after warm-up)", this.outputHelper);
             var actual = subject.Parse(sb);
             Benchmark.End(this.outputHelper);
-            Assert.Equal(1, actual.Count());
-            var first = actual.First();
+            Assert.Single(actual);
+            var first = actual[0];
             Assert.Equal(expectedKey, first.Variable);
             Assert.Equal(expectedFormat, first.FormatterName);
             Assert.Equal(expectedArgs, first.FormatterArguments);
@@ -99,12 +94,20 @@ namespace Jeffijoe.MessageFormat.Tests.Parsing
         [Fact]
         public void Parse_exits_early_when_no_literals_have_been_found()
         {
-            var literalParserMock = new Mock<ILiteralParser>();
-            var subject = new PatternParser(literalParserMock.Object);
-            literalParserMock.Setup(x => x.ParseLiterals(It.IsAny<StringBuilder>())).Returns(new Literal[0]);
+            var subject = new PatternParser();
             Assert.Empty(subject.Parse(new StringBuilder()));
         }
-
+        
+        /// <summary>
+        /// The parse_throws_when_only_whitespace_is_present_in_section
+        /// </summary>
+        [Fact]
+        public void Parse_throws_when_only_whitespace_is_present_in_section()
+        {
+            var subject = new PatternParser();
+            Assert.Throws<MalformedLiteralException>(() => subject.Parse(new StringBuilder("{  }")));
+        }
+        
         #endregion
     }
 }

@@ -5,10 +5,7 @@
 // Copyright (C) Jeff Hansen 2015. All rights reserved.
 
 using System.Collections.Generic;
-using System.Text;
-
 using Jeffijoe.MessageFormat.Parsing;
-
 using Xunit;
 using Xunit.Abstractions;
 
@@ -48,16 +45,16 @@ namespace Jeffijoe.MessageFormat.Tests.Parsing
         /// <summary>
         /// Gets the get key_throws_with_invalid_characters_ case.
         /// </summary>
-        public static IEnumerable<object[]> GetKey_throws_with_invalid_characters_Case
+        public static IEnumerable<object[]> GetKeyThrowsWithInvalidCharactersCase
         {
             get
             {
-                yield return new object[] { new Literal(3, 10, 1, 3, new StringBuilder("Hellåw,")), 1, 8 };
-                yield return new object[] { new Literal(0, 0, 3, 3, new StringBuilder(",")), 3, 4 };
-                yield return new object[] { new Literal(0, 0, 3, 3, new StringBuilder(" hello dawg")), 0, 0 };
-                yield return new object[] { new Literal(0, 0, 3, 3, new StringBuilder("hello dawg ")), 0, 0 };
-                yield return new object[] { new Literal(0, 0, 3, 3, new StringBuilder(" hello dawg")), 0, 0 };
-                yield return new object[] { new Literal(0, 0, 3, 3, new StringBuilder(" hello\r\ndawg")), 0, 0 };
+                yield return new object[] { new Literal(3, 10, 1, 3, "Hellåw,"), 1, 8 };
+                yield return new object[] { new Literal(0, 0, 3, 3, ","), 3, 4 };
+                yield return new object[] { new Literal(0, 0, 3, 3, " hello dawg"), 0, 0 };
+                yield return new object[] { new Literal(0, 0, 3, 3, "hello dawg "), 0, 0 };
+                yield return new object[] { new Literal(0, 0, 3, 3, " hello dawg"), 0, 0 };
+                yield return new object[] { new Literal(0, 0, 3, 3, " hello\r\ndawg"), 0, 0 };
             }
         }
 
@@ -88,7 +85,7 @@ namespace Jeffijoe.MessageFormat.Tests.Parsing
         [InlineData("0", "0", 0)]
         public void ReadLiteralSection(string source, string expected, int expectedLastIndex)
         {
-            var literal = new Literal(10, 10, 1, 1, new StringBuilder(source));
+            var literal = new Literal(10, 10, 1, 1, source);
             int lastIndex;
             Assert.Equal(expected, PatternParser.ReadLiteralSection(literal, 0, false, out lastIndex));
             Assert.Equal(expectedLastIndex, lastIndex);
@@ -107,16 +104,15 @@ namespace Jeffijoe.MessageFormat.Tests.Parsing
         /// The expected column.
         /// </param>
         [Theory]
-        [MemberData("GetKey_throws_with_invalid_characters_Case")]
+        [MemberData(nameof(GetKeyThrowsWithInvalidCharactersCase))]
         public void ReadLiteralSection_throws_with_invalid_characters(
             Literal literal, 
             int expectedLine, 
             int expectedColumn)
         {
-            int lastIndex;
             var ex =
                 Assert.Throws<MalformedLiteralException>(
-                    () => PatternParser.ReadLiteralSection(literal, 0, false, out lastIndex));
+                    () => PatternParser.ReadLiteralSection(literal, 0, false, out _));
             Assert.Equal(expectedLine, ex.LineNumber);
             Assert.Equal(expectedColumn, ex.ColumnNumber);
             this.outputHelper.WriteLine(ex.Message);
@@ -142,9 +138,8 @@ namespace Jeffijoe.MessageFormat.Tests.Parsing
         [InlineData("SupDawg,", null, 8)]
         public void ReadLiteralSection_with_offset(string source, string expected, int offset)
         {
-            var literal = new Literal(10, 10, 1, 1, new StringBuilder(source));
-            int lastIndex;
-            Assert.Equal(expected, PatternParser.ReadLiteralSection(literal, offset, true, out lastIndex));
+            var literal = new Literal(10, 10, 1, 1, source);
+            Assert.Equal(expected, PatternParser.ReadLiteralSection(literal, offset, true, out _));
         }
 
         #endregion

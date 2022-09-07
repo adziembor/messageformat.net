@@ -12,6 +12,16 @@ namespace Jeffijoe.MessageFormat.Formatting
     /// </summary>
     public interface IFormatter
     {
+        #region Public Properties
+        
+        /// <summary>
+        ///     Each Formatter must declare whether or not an input variable is required to exist.
+        ///     Most of the time that is the case. 
+        /// </summary>
+        bool VariableMustExist { get; }
+
+        #endregion
+        
         #region Public Methods and Operators
 
         /// <summary>
@@ -29,12 +39,12 @@ namespace Jeffijoe.MessageFormat.Formatting
         /// Using the specified parameters and arguments, a formatted string shall be returned.
         /// The <see cref="IMessageFormatter" /> is being provided as well, to enable
         /// nested formatting. This is only called if <see cref="CanFormat" /> returns true.
-        /// The <see cref="args" /> will always contain the <see cref="FormatterRequest.Variable" />.
+        /// The args will always contain the <see cref="FormatterRequest.Variable" />.
         /// </summary>
         /// <param name="locale">The locale being used. It is up to the formatter what they do with this information.</param>
         /// <param name="request">The parameters.</param>
         /// <param name="args">The arguments.</param>
-        /// <param name="value">The value of <see cref="FormatterRequest.Variable"/> from the given <see cref="args"/> dictionary. Can be null.</param>
+        /// <param name="value">The value of <see cref="FormatterRequest.Variable"/> from the given args dictionary. Can be null.</param>
         /// <param name="messageFormatter">The message formatter.</param>
         /// <returns>
         /// The <see cref="string" />.
@@ -42,8 +52,8 @@ namespace Jeffijoe.MessageFormat.Formatting
         string Format(
             string locale, 
             FormatterRequest request,
-            IDictionary<string, object> args,
-            object value,
+            IDictionary<string, object?> args,
+            object? value,
             IMessageFormatter messageFormatter);
 
         #endregion
