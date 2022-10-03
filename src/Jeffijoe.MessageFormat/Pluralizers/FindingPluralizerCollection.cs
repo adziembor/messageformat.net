@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Jeffijoe.MessageFormat.Formatting.Formatters;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Jeffijoe.MessageFormat.Pluralizers
 {
@@ -37,7 +38,7 @@ namespace Jeffijoe.MessageFormat.Pluralizers
                 yield return name; // iu_Latn_CA
             }
         }
-        public bool TryGetPluralizer(string name, out Pluralizer pluralizer)
+        public bool TryGetPluralizer(string name, [NotNullWhen(true), MaybeNullWhen(false)] out Pluralizer pluralizer)
         {
             foreach (var tagName in GetMatchingLocaleTags(name.Replace("-", "_")))
             {

@@ -1,5 +1,6 @@
 ﻿using Jeffijoe.MessageFormat.Formatting.Formatters;
 using Jeffijoe.MessageFormat.Pluralizers;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Jeffijoe.MessageFormat
 {
@@ -19,6 +20,6 @@ namespace Jeffijoe.MessageFormat
         /// <param name="name">locale name</param>
         /// <param name="pluralizer">resolved pluralizer or null in case of failure</param>
         /// <returns>true if the pluralizer was found; otherwise, false</returns>
-        bool TryGetPluralizer(string name, out Pluralizer pluralizer);
+        bool TryGetPluralizer(string name, [NotNullWhen(true), MaybeNullWhen(false)] out Pluralizer pluralizer);
     }
 }

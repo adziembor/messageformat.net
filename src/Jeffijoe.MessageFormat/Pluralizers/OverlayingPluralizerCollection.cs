@@ -1,6 +1,7 @@
 ﻿using Jeffijoe.MessageFormat.Formatting.Formatters;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,9 +23,9 @@ namespace Jeffijoe.MessageFormat.Pluralizers
             return _overlay.TryAddPluralizer(name, pluralizer);
         }
 
-        public bool TryGetPluralizer(string name, out Pluralizer pluralizer)
+        public bool TryGetPluralizer(string name, [NotNullWhen(true), MaybeNullWhen(false)] out Pluralizer pluralizer)
         {
-            if(_overlay.TryGetPluralizer(name, out pluralizer))
+            if (_overlay.TryGetPluralizer(name, out pluralizer))
             {
                 return true;
             }

@@ -16,23 +16,24 @@ namespace Jeffijoe.MessageFormat.Formatting.Formatters
             return request.FormatterName == "date";
         }
 
-        public DateTime CastDate(object value)
+        public static DateTime CastDate(object? value)
         {
-            if (value is long)
-                return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((long)value);
-            if (value is ulong)
-                return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((ulong)value);
-            if (value is int)
-                return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds((int)value);
-            if (value is DateTime)
-                return (DateTime)value;
-            throw new ArgumentException("Value does not have valid type, unexpected " + value.GetType().Name);
+            return value switch
+            {
+                long ms => new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(ms),
+                ulong ms2 => new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(ms2),
+                int s => new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(s),
+                DateTime dt => dt,
+                null => throw new ArgumentException("expected date value was null"),
+                _ => throw new ArgumentException("Value does not have valid type, unexpected " + value.GetType().Name)
+            };
         }
+
         public string Format(
             string locale,
             FormatterRequest request,
-            IDictionary<string, object> args,
-            object value,
+            IDictionary<string, object?> args,
+            object? value,
             IMessageFormatter messageFormatter)
         {
             var d = CastDate(value);

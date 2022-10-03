@@ -1,6 +1,7 @@
 ﻿using Jeffijoe.MessageFormat.Formatting.Formatters;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -42,7 +43,7 @@ namespace Jeffijoe.MessageFormat.Pluralizers
             return false;
         }
 
-        public bool TryGetPluralizer(string name, out Pluralizer pluralizer)
+        public bool TryGetPluralizer(string name, [NotNullWhen(true), MaybeNullWhen(false)] out Pluralizer pluralizer)
         {
             return _collection.TryGetValue(name, out pluralizer);
         }
