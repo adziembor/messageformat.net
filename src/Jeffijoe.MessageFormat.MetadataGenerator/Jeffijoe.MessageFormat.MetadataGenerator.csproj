@@ -5,7 +5,7 @@
     <AssemblyOriginatorKeyFile>../Jeffijoe.MessageFormat/MessageFormat.snk</AssemblyOriginatorKeyFile>
     <LangVersion>default</LangVersion>
     <Nullable>enable</Nullable>
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks>net7.0</TargetFrameworks>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
